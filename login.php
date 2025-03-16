@@ -30,10 +30,16 @@ if ($_SESSION['login_attempts'] >= 5) {
 
     // Validate input
     if (!empty($email) && !empty($password)) {
-        // Fetch user from the database
-        $stmt = $conn->prepare("SELECT `id`, `email`, `password`, `role_id` FROM `users` WHERE `email` = ?");
+        // Fetch user from the database along with role name
+        $stmt = $conn->prepare("
+            SELECT u.id, u.email, u.password, u.role_id, r.name 
+            FROM users u 
+            JOIN roles r ON u.role_id = r.id 
+            WHERE u.email = ?
+        ");
+        
         if (!$stmt) {
-            $error_message = "Database error in login query: " . $conn->error; // Show full error
+            $error_message = "Database error in login query: " . $conn->error;
             logEvent($conn, NULL, "Database error in login query: " . $conn->error, "error");
         } else {
             $stmt->bind_param("s", $email);
@@ -41,14 +47,15 @@ if ($_SESSION['login_attempts'] >= 5) {
             $stmt->store_result();
 
             if ($stmt->num_rows > 0) {
-                $stmt->bind_result($id, $email, $hashed_password, $role);
+                $stmt->bind_result($id, $email, $hashed_password, $role_id, $role_name);
                 $stmt->fetch();
 
                 // Verify password
                 if (password_verify($password, $hashed_password)) {
                     $_SESSION['user_id'] = $id;
                     $_SESSION['email'] = $email;
-                    $_SESSION['role'] = $role;
+                    $_SESSION['role_id'] = $role_id;
+                    $_SESSION['role_name'] = $role_name; // Store role name in session
                     $_SESSION['login_attempts'] = 0; // Reset login attempts
 
                     logEvent($conn, $id, "User logged in", "success");

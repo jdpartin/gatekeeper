@@ -20,11 +20,38 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// User is authenticated, log dashboard access
+// User is authenticated, fetch user data
 $user_id = $_SESSION['user_id'];
 $user_email = $_SESSION['email'];
-$user_role = $_SESSION['role'];
+$user_role_name = $_SESSION['role_name'];
 logEvent($conn, $user_id, "User accessed dashboard", "success");
+
+// Fetch user permissions from the database
+$permissions = [];
+$stmt = $conn->prepare("
+    SELECT p.name 
+    FROM permissions p
+    JOIN role_permissions rp ON p.id = rp.permission_id
+    JOIN roles r ON rp.role_id = r.id
+    WHERE r.name = ?
+");
+if ($stmt) {
+    $stmt->bind_param("s", $user_role_name);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    while ($row = $result->fetch_assoc()) {
+        $permissions[] = $row['name'];
+    }
+    $stmt->close();
+}
+
+// Store permissions in session
+$_SESSION['permissions'] = $permissions;
+
+// Helper function to check permission
+function hasPermission($permission) {
+    return in_array($permission, $_SESSION['permissions']);
+}
 ?>
 
 <!DOCTYPE html>
@@ -54,28 +81,49 @@ logEvent($conn, $user_id, "User accessed dashboard", "success");
 
     <div class="container mt-5">
         <h1 class="text-center">Welcome, <?php echo htmlspecialchars($user_email); ?>!</h1>
-        <p class="text-center text-muted">Your role: <strong><?php echo strtoupper($user_role); ?></strong></p>
+        <p class="text-center text-muted">Your role: <strong><?php echo strtoupper($user_role_name); ?></strong></p>
 
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <div class="list-group">
-                    <a href="restricted.php?page=reports" class="list-group-item list-group-item-action">
-                        <i class="bi bi-bar-chart-fill"></i> View Reports
-                    </a>
+                    <!-- Real Content -->
+                    <h5 class="text-muted">Available Features</h5>
 
-                    <?php if ($user_role == 'admin' || $user_role == 'manager'): ?>
+                    <?php if (hasPermission('view_users')): ?>
+                        <a href="view_users.php" class="list-group-item list-group-item-action">
+                            <i class="bi bi-people"></i> View Users
+                        </a>
+                    <?php endif; ?>
+
+                    <?php if (hasPermission('view_audit_logs')): ?>
+                        <a href="audit_logs.php" class="list-group-item list-group-item-action">
+                            <i class="bi bi-shield-lock"></i> View Audit Logs
+                        </a>
+                    <?php endif; ?>
+
+                    <!-- Placeholder Pages (Access Control Only) -->
+                    <h5 class="text-muted mt-3">Access-Only Sections</h5>
+                    <p class="text-muted small mb-2 px-3">These sections are for demo purposes only, they will confirm access but do not display additional content.</p>
+
+                    <?php if (hasPermission('view_reports')): ?>
+                        <a href="restricted.php?page=reports" class="list-group-item list-group-item-action">
+                            <i class="bi bi-bar-chart-fill"></i> View Reports
+                        </a>
+                    <?php endif; ?>
+
+                    <?php if (hasPermission('manage_orders')): ?>
                         <a href="restricted.php?page=manage_orders" class="list-group-item list-group-item-action">
                             <i class="bi bi-box-seam"></i> Manage Orders
                         </a>
                     <?php endif; ?>
 
-                    <?php if ($user_role == 'admin'): ?>
+                    <?php if (hasPermission('manage_users')): ?>
                         <a href="restricted.php?page=manage_users" class="list-group-item list-group-item-action">
-                            <i class="bi bi-people-fill"></i> Manage Users
+                            <i class="bi bi-person-plus"></i> Manage Users
                         </a>
-                        <a href="restricted.php?page=audit_logs" class="list-group-item list-group-item-action">
-                            <i class="bi bi-shield-lock"></i> View Audit Logs
-                        </a>
+                    <?php endif; ?>
+
+                    <?php if (hasPermission('access_settings')): ?>
                         <a href="restricted.php?page=settings" class="list-group-item list-group-item-action">
                             <i class="bi bi-gear-fill"></i> System Settings
                         </a>
