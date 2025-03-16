@@ -14,7 +14,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Validate input
     if (!empty($email) && !empty($password) && !empty($role_id)) {
         // Check if email already exists
-        $stmt = $conn->prepare("SELECT 'id' FROM `users` WHERE email = ?");
+        $stmt = $conn->prepare("SELECT `id` FROM `users` WHERE `email` = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $stmt->store_result();
@@ -26,7 +26,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
             // Insert new user into database
-            $stmt = $conn->prepare("INSERT INTO `users` ('email', 'password', 'role_id') VALUES (?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO `users` (`email`, `password`, `role_id`) VALUES (?, ?, ?)");
             $stmt->bind_param("ssi", $email, $hashed_password, $role_id);
 
             if ($stmt->execute()) {
