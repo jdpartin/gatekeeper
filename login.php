@@ -31,11 +31,10 @@ if ($_SESSION['login_attempts'] >= 5) {
     // Validate input
     if (!empty($email) && !empty($password)) {
         // Fetch user from the database
-        $stmt = $conn->prepare("SELECT `id`, `email`, `password`, `role` FROM `users` WHERE `email` = ?");
+        $stmt = $conn->prepare("SELECT `id`, `email`, `password`, `role_id` FROM `users` WHERE `email` = ?");
         if (!$stmt) {
             $error_message = "Database error in login query: " . $conn->error; // Show full error
             logEvent($conn, NULL, "Database error in login query: " . $conn->error, "error");
-            die("Database Error: " . $conn->error); // Stop execution and show error
         } else {
             $stmt->bind_param("s", $email);
             $stmt->execute();
