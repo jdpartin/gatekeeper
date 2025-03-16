@@ -100,10 +100,12 @@ if ($_SESSION['login_attempts'] >= 5) {
 
                         <div class="alert alert-info text-center">
                             <h5>Demo Credentials</h5>
-                            <p><strong>Admin:</strong> admin@example.com | <strong>Password:</strong> demo123</p>
-                            <p><strong>Manager:</strong> manager@example.com | <strong>Password:</strong> demo123</p>
-                            <p><strong>Employee:</strong> employee@example.com | <strong>Password:</strong> demo123</p>
-                            <p><strong>Viewer:</strong> viewer@example.com | <strong>Password:</strong> demo123</p>
+                            <p><strong>Admin:</strong> admin@example.com</p>
+                            <p><strong>Manager:</strong> manager@example.com</p>
+                            <p><strong>Employee:</strong> employee@example.com</p>
+                            <p><strong>Viewer:</strong> viewer@example.com</p>
+                            <br>
+                            <p><strong>Password:</strong> demo123</p>
                         </div>
 
                         <?php if (!empty($error_message)): ?>
