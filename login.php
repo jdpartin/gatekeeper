@@ -19,7 +19,7 @@ if ($_SESSION['login_attempts'] >= 5) {
     // Validate input
     if (!empty($email) && !empty($password)) {
         // Fetch user from the database
-        $stmt = $conn->prepare("SELECT id, email, password, role FROM users WHERE email = ?");
+        $stmt = $conn->prepare("SELECT 'id', 'email', 'password', 'role' FROM `users` WHERE 'email' = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $stmt->store_result();
