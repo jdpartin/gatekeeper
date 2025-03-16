@@ -102,8 +102,8 @@ function hasPermission($permission) {
                     <?php endif; ?>
 
                     <!-- Placeholder Pages (Access Control Only) -->
-                    <h5 class="text-muted mt-3">Access-Only Sections</h5>
-                    <p class="text-muted small mb-2 px-3">These sections are for demo purposes only, they will confirm access but do not display additional content.</p>
+                    <h5 class="text-muted mt-3">Access Control Demo Only Sections</h5>
+                    <p class="text-muted small mb-2 px-3">These sections are for demo purposes only, they will confirm or deny access based on the signed in account's role, but do not display additional content.</p>
 
                     <?php if (hasPermission('view_reports')): ?>
                         <a href="restricted.php?page=reports" class="list-group-item list-group-item-action">

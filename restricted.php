@@ -4,7 +4,7 @@ require 'db.php'; // Database connection
 
 // Function to log user access attempts
 function logEvent($conn, $user_id, $action, $status) {
-    $ip = $_SERVER['REMOTE_ADDR']; // Capture the user's IP address
+    $ip = $_SERVER['REMOTE_ADDR'];
     $stmt = $conn->prepare("INSERT INTO `audit_logs` (`user_id`, `action`, `status`, `ip_address`) VALUES (?, ?, ?, ?)");
     if ($stmt) {
         $stmt->bind_param("isss", $user_id, $action, $status, $ip);
@@ -21,26 +21,29 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
-$user_role = $_SESSION['role']; // User role from session
 $page = $_GET['page'] ?? ''; // Get requested page from URL
 
-// Define which roles can access which pages
-$permissions = [
-    'manage_users'   => ['admin'],
-    'manage_orders'  => ['admin', 'manager'],
-    'reports'        => ['admin', 'manager', 'employee'],
-    'audit_logs'     => ['admin'],
-    'settings'       => ['admin']
+// Map "page names" to actual permission names in the database
+$page_permissions = [
+    'manage_users'   => 'manage_users',
+    'manage_orders'  => 'manage_orders',
+    'reports'        => 'view_reports',
+    'audit_logs'     => 'view_audit_logs',
+    'settings'       => 'access_settings'
 ];
 
-// Check if the page exists and if the user has permission
-if (!isset($permissions[$page])) {
+// Check if the requested page maps to a valid permission
+if (!isset($page_permissions[$page])) {
     logEvent($conn, $user_id, "Attempted access to non-existent page: $page", "error");
     header("Location: 403.php");
     exit();
 }
 
-if (!in_array($user_role, $permissions[$page])) {
+// Get the required permission for the requested page
+$required_permission = $page_permissions[$page];
+
+// Check if the user has this permission
+if (!in_array($required_permission, $_SESSION['permissions'])) {
     logEvent($conn, $user_id, "Unauthorized attempt to access $page", "failure");
     header("Location: 403.php");
     exit();
