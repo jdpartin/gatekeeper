@@ -2,7 +2,7 @@
 $servername = "localhost";
 $username = "pi"; // Change to your database username
 $password = "t3stpass!"; // Change to your database password
-$dbname = "gatekeeper_db"; // Change to your actual database name
+$dbname = "GateKeeper"; // Change to your actual database name
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
