@@ -96,6 +96,7 @@ if ($_SESSION['login_attempts'] >= 5) {
                             <p><strong>Admin:</strong> admin@example.com | <strong>Password:</strong> demo123</p>
                             <p><strong>Manager:</strong> manager@example.com | <strong>Password:</strong> demo123</p>
                             <p><strong>Employee:</strong> employee@example.com | <strong>Password:</strong> demo123</p>
+                            <p><strong>Viewer:</strong> viewer@example.com | <strong>Password:</strong> demo123</p>
                         </div>
 
                         <?php if (!empty($error_message)): ?>
