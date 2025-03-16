@@ -2,12 +2,25 @@
 session_start();
 require 'db.php'; // Database connection
 
+// Function to log user access attempts
+function logEvent($conn, $user_id, $action, $status) {
+    $ip = $_SERVER['REMOTE_ADDR']; // Capture the user's IP address
+    $stmt = $conn->prepare("INSERT INTO `audit_logs` (`user_id`, `action`, `status`, `ip_address`) VALUES (?, ?, ?, ?)");
+    if ($stmt) {
+        $stmt->bind_param("isss", $user_id, $action, $status, $ip);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
 // Redirect to login if user is not authenticated
 if (!isset($_SESSION['user_id'])) {
+    logEvent($conn, NULL, "Unauthorized access attempt to restricted page", "failure");
     header("Location: login.php");
     exit();
 }
 
+$user_id = $_SESSION['user_id'];
 $user_role = $_SESSION['role']; // User role from session
 $page = $_GET['page'] ?? ''; // Get requested page from URL
 
@@ -21,10 +34,20 @@ $permissions = [
 ];
 
 // Check if the page exists and if the user has permission
-if (!isset($permissions[$page]) || !in_array($user_role, $permissions[$page])) {
+if (!isset($permissions[$page])) {
+    logEvent($conn, $user_id, "Attempted access to non-existent page: $page", "error");
     header("Location: 403.php");
     exit();
 }
+
+if (!in_array($user_role, $permissions[$page])) {
+    logEvent($conn, $user_id, "Unauthorized attempt to access $page", "failure");
+    header("Location: 403.php");
+    exit();
+}
+
+// Log successful access
+logEvent($conn, $user_id, "Accessed $page", "success");
 ?>
 
 <!DOCTYPE html>

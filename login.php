@@ -5,6 +5,17 @@ require 'db.php'; // Database connection
 // Initialize error message variable
 $error_message = "";
 
+// Function to log events
+function logEvent($conn, $user_id, $action, $status) {
+    $ip = $_SERVER['REMOTE_ADDR']; // Capture the user's IP address
+    $stmt = $conn->prepare("INSERT INTO `audit_logs` (`user_id`, `action`, `status`, `ip_address`) VALUES (?, ?, ?, ?)");
+    if ($stmt) {
+        $stmt->bind_param("isss", $user_id, $action, $status, $ip);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
 // Brute Force Protection: Limit login attempts per session
 if (!isset($_SESSION['login_attempts'])) {
     $_SESSION['login_attempts'] = 0;
@@ -12,6 +23,7 @@ if (!isset($_SESSION['login_attempts'])) {
 
 if ($_SESSION['login_attempts'] >= 5) {
     $error_message = "Too many failed attempts. Try again later.";
+    logEvent($conn, NULL, "Brute force protection triggered", "error");
 } else if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST['email']);
     $password = $_POST['password'];
@@ -20,34 +32,42 @@ if ($_SESSION['login_attempts'] >= 5) {
     if (!empty($email) && !empty($password)) {
         // Fetch user from the database
         $stmt = $conn->prepare("SELECT `id`, `email`, `password`, `role` FROM `users` WHERE `email` = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $stmt->store_result();
+        if (!$stmt) {
+            logEvent($conn, NULL, "Database error in login query", "error");
+            $error_message = "An unexpected error occurred. Please try again later.";
+        } else {
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $stmt->store_result();
 
-        if ($stmt->num_rows > 0) {
-            $stmt->bind_result($id, $email, $hashed_password, $role);
-            $stmt->fetch();
+            if ($stmt->num_rows > 0) {
+                $stmt->bind_result($id, $email, $hashed_password, $role);
+                $stmt->fetch();
 
-            // Verify password
-            if (password_verify($password, $hashed_password)) {
-                $_SESSION['user_id'] = $id;
-                $_SESSION['email'] = $email;
-                $_SESSION['role'] = $role;
-                $_SESSION['login_attempts'] = 0; // Reset login attempts
-                
-                // Redirect to the dashboard
-                header("Location: dashboard.php");
-                exit();
+                // Verify password
+                if (password_verify($password, $hashed_password)) {
+                    $_SESSION['user_id'] = $id;
+                    $_SESSION['email'] = $email;
+                    $_SESSION['role'] = $role;
+                    $_SESSION['login_attempts'] = 0; // Reset login attempts
+
+                    logEvent($conn, $id, "User logged in", "success");
+
+                    // Redirect to the dashboard
+                    header("Location: dashboard.php");
+                    exit();
+                } else {
+                    $_SESSION['login_attempts']++;
+                    $error_message = "Invalid email or password.";
+                    logEvent($conn, NULL, "Failed login attempt for email: $email", "failure");
+                }
             } else {
                 $_SESSION['login_attempts']++;
                 $error_message = "Invalid email or password.";
+                logEvent($conn, NULL, "Failed login attempt for non-existent email: $email", "failure");
             }
-        } else {
-            $_SESSION['login_attempts']++;
-            $error_message = "Invalid email or password.";
+            $stmt->close();
         }
-
-        $stmt->close();
     } else {
         $error_message = "Please enter both email and password.";
     }

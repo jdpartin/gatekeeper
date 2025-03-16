@@ -2,15 +2,29 @@
 session_start();
 require 'db.php'; // Database connection
 
-// Redirect to login if user is not authenticated
+// Function to log user access
+function logEvent($conn, $user_id, $action, $status) {
+    $ip = $_SERVER['REMOTE_ADDR']; // Capture the user's IP address
+    $stmt = $conn->prepare("INSERT INTO `audit_logs` (`user_id`, `action`, `status`, `ip_address`) VALUES (?, ?, ?, ?)");
+    if ($stmt) {
+        $stmt->bind_param("isss", $user_id, $action, $status, $ip);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
+// Check if user is authenticated
 if (!isset($_SESSION['user_id'])) {
+    logEvent($conn, NULL, "Unauthorized dashboard access attempt", "failure");
     header("Location: login.php");
     exit();
 }
 
-// Get user details
+// User is authenticated, log dashboard access
+$user_id = $_SESSION['user_id'];
 $user_email = $_SESSION['email'];
-$user_role = $_SESSION['role']; // This should be stored as a string (admin, manager, employee, viewer)
+$user_role = $_SESSION['role'];
+logEvent($conn, $user_id, "User accessed dashboard", "success");
 ?>
 
 <!DOCTYPE html>
@@ -45,24 +59,24 @@ $user_role = $_SESSION['role']; // This should be stored as a string (admin, man
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <div class="list-group">
-                    <a href="reports.php" class="list-group-item list-group-item-action">
+                    <a href="restricted.php?page=reports" class="list-group-item list-group-item-action">
                         <i class="bi bi-bar-chart-fill"></i> View Reports
                     </a>
 
                     <?php if ($user_role == 'admin' || $user_role == 'manager'): ?>
-                        <a href="manage_orders.php" class="list-group-item list-group-item-action">
+                        <a href="restricted.php?page=manage_orders" class="list-group-item list-group-item-action">
                             <i class="bi bi-box-seam"></i> Manage Orders
                         </a>
                     <?php endif; ?>
 
                     <?php if ($user_role == 'admin'): ?>
-                        <a href="manage_users.php" class="list-group-item list-group-item-action">
+                        <a href="restricted.php?page=manage_users" class="list-group-item list-group-item-action">
                             <i class="bi bi-people-fill"></i> Manage Users
                         </a>
-                        <a href="audit_logs.php" class="list-group-item list-group-item-action">
+                        <a href="restricted.php?page=audit_logs" class="list-group-item list-group-item-action">
                             <i class="bi bi-shield-lock"></i> View Audit Logs
                         </a>
-                        <a href="settings.php" class="list-group-item list-group-item-action">
+                        <a href="restricted.php?page=settings" class="list-group-item list-group-item-action">
                             <i class="bi bi-gear-fill"></i> System Settings
                         </a>
                     <?php endif; ?>

@@ -5,6 +5,17 @@ require 'db.php'; // Include database connection
 $error_message = "";
 $success_message = "";
 
+// Function to log system errors
+function logError($conn, $message) {
+    $ip = $_SERVER['REMOTE_ADDR']; // Capture IP address
+    $stmt = $conn->prepare("INSERT INTO `audit_logs` (`user_id`, `action`, `status`, `ip_address`) VALUES (NULL, ?, 'error', ?)");
+    if ($stmt) {
+        $stmt->bind_param("ss", $message, $ip);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST['email']);
@@ -15,26 +26,38 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (!empty($email) && !empty($password) && !empty($role_id)) {
         // Check if email already exists
         $stmt = $conn->prepare("SELECT `id` FROM `users` WHERE `email` = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $stmt->store_result();
-
-        if ($stmt->num_rows > 0) {
-            $error_message = "Email is already registered.";
+        if (!$stmt) {
+            logError($conn, "Database error in SELECT: " . $conn->error);
+            $error_message = "An unexpected error occurred. Please try again later.";
         } else {
-            // Hash the password
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $stmt->store_result();
 
-            // Insert new user into database
-            $stmt = $conn->prepare("INSERT INTO `users` (`email`, `password`, `role_id`) VALUES (?, ?, ?)");
-            $stmt->bind_param("ssi", $email, $hashed_password, $role_id);
-
-            if ($stmt->execute()) {
-                $success_message = "Account created successfully! You can now <a href='login.php'>log in</a>.";
+            if ($stmt->num_rows > 0) {
+                $error_message = "Email is already registered.";
             } else {
-                $error_message = "Error creating account. Please try again.";
-            }
+                // Hash the password
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
+                // Insert new user into database
+                $stmt = $conn->prepare("INSERT INTO `users` (`email`, `password`, `role_id`) VALUES (?, ?, ?)");
+                if (!$stmt) {
+                    logError($conn, "Database error in INSERT: " . $conn->error);
+                    $error_message = "An unexpected error occurred. Please try again later.";
+                } else {
+                    $stmt->bind_param("ssi", $email, $hashed_password, $role_id);
+
+                    if ($stmt->execute()) {
+                        $success_message = "Account created successfully! You can now <a href='login.php'>log in</a>.";
+                    } else {
+                        logError($conn, "Failed to execute INSERT: " . $stmt->error);
+                        $error_message = "Error creating account. Please try again.";
+                    }
+
+                    $stmt->close();
+                }
+            }
             $stmt->close();
         }
     } else {
