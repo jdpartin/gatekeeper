@@ -33,8 +33,9 @@ if ($_SESSION['login_attempts'] >= 5) {
         // Fetch user from the database
         $stmt = $conn->prepare("SELECT `id`, `email`, `password`, `role` FROM `users` WHERE `email` = ?");
         if (!$stmt) {
-            logEvent($conn, NULL, "Database error in login query", "error");
-            $error_message = "An unexpected error occurred. Please try again later.";
+            $error_message = "Database error in login query: " . $conn->error; // Show full error
+            logEvent($conn, NULL, "Database error in login query: " . $conn->error, "error");
+            die("Database Error: " . $conn->error); // Stop execution and show error
         } else {
             $stmt->bind_param("s", $email);
             $stmt->execute();
