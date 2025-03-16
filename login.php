@@ -5,9 +5,15 @@ require 'db.php'; // Database connection
 // Initialize error message variable
 $error_message = "";
 
-// Check if the form was submitted
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $email = $_POST['email'];
+// Brute Force Protection: Limit login attempts per session
+if (!isset($_SESSION['login_attempts'])) {
+    $_SESSION['login_attempts'] = 0;
+}
+
+if ($_SESSION['login_attempts'] >= 5) {
+    $error_message = "Too many failed attempts. Try again later.";
+} else if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $email = trim($_POST['email']);
     $password = $_POST['password'];
 
     // Validate input
@@ -17,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $stmt->store_result();
-        
+
         if ($stmt->num_rows > 0) {
             $stmt->bind_result($id, $email, $hashed_password, $role);
             $stmt->fetch();
@@ -27,14 +33,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['user_id'] = $id;
                 $_SESSION['email'] = $email;
                 $_SESSION['role'] = $role;
+                $_SESSION['login_attempts'] = 0; // Reset login attempts
                 
                 // Redirect to the dashboard
                 header("Location: dashboard.php");
                 exit();
             } else {
+                $_SESSION['login_attempts']++;
                 $error_message = "Invalid email or password.";
             }
         } else {
+            $_SESSION['login_attempts']++;
             $error_message = "Invalid email or password.";
         }
 
@@ -62,6 +71,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="card-body">
                         <h2 class="text-center">Login to GateKeeper</h2>
 
+                        <div class="alert alert-info text-center">
+                            <h5>Demo Credentials</h5>
+                            <p><strong>Admin:</strong> admin@example.com | <strong>Password:</strong> demo123</p>
+                            <p><strong>Manager:</strong> manager@example.com | <strong>Password:</strong> demo123</p>
+                            <p><strong>Employee:</strong> employee@example.com | <strong>Password:</strong> demo123</p>
+                        </div>
+
                         <?php if (!empty($error_message)): ?>
                             <div class="alert alert-danger text-center">
                                 <?php echo $error_message; ?>
@@ -81,6 +97,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                             <button type="submit" class="btn btn-primary w-100">Login</button>
                         </form>
+
+                        <div class="text-center mt-3">
+                            <p>Don't have an account? <a href="signup.php">Sign Up</a></p>
+                        </div>
                     </div>
                 </div>
             </div>
