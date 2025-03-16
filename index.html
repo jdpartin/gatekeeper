@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GateKeeper – Secure Access Control</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        .wrapper {
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content {
+            flex: 1;
+        }
+
+        .footer {
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="wrapper">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="#">GateKeeper</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="login.php">Login</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container text-center mt-5 content">
+            <h1 class="display-4">Welcome to GateKeeper</h1>
+            <p class="lead">Secure Role-Based Access Control for Enterprise Systems</p>
+
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <p class="text-muted">
+                        GateKeeper ensures secure authentication, user role management, and access control enforcement.
+                        Protect sensitive resources with role-based permissions and audit logging.
+                    </p>
+                    <ul class="list-group list-group-flush text-start">
+                        <li class="list-group-item"><i class="bi bi-check-circle-fill text-success"></i> Secure Authentication</li>
+                        <li class="list-group-item"><i class="bi bi-check-circle-fill text-success"></i> Role-Based Permissions</li>
+                        <li class="list-group-item"><i class="bi bi-check-circle-fill text-success"></i> Audit Logging & Monitoring</li>
+                    </ul>
+                    <a href="login.php" class="btn btn-primary btn-lg mt-3">Login to GateKeeper</a>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p class="mb-0"><i class="bi bi-c-circle"></i> 2024 GateKeeper. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.js"></script>
+</body>
+</html>
